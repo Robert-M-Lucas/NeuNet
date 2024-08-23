@@ -8,8 +8,8 @@ use ndarray::{Array, IxDyn};
 
 use crate::layers::Layer;
 
-pub type DataElement = f64;
-pub type DATA = Array<DataElement, IxDyn>;
+pub type fXX = f64;
+pub type DATA = Array<fXX, IxDyn>;
 pub type LAYERS = Vec<Box<dyn Layer>>;
 
 pub struct Model {

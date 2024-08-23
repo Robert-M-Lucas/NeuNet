@@ -1,9 +1,16 @@
 use ndarray::{array, Array, Array1, Array2};
+use ndarray_rand::rand_distr::{Normal, Uniform};
 use serde::{Deserialize, Serialize};
 use typetag::serde;
+use ndarray_rand::RandomExt;
 
 use crate::layers::{DATA, Layer};
-use crate::model::DataElement;
+use crate::model::fXX;
+
+pub enum WeightMode {
+    Equal,
+    Normal
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct DenseLayerConfig {
@@ -16,25 +23,36 @@ pub struct DenseLayer {
     #[serde(flatten)]
     config: DenseLayerConfig,
     #[serde(skip)]
-    weights: Array2<DataElement>,
+    weights: Array2<fXX>,
     #[serde(skip)]
-    biases: Array1<DataElement>,
+    biases: Array1<fXX>,
     #[serde(skip)]
-    back_context: Option<Array1<DataElement>>
+    back_context: Option<Array1<fXX>>
 }
 
 impl DenseLayer {
     pub fn new_default(input_size: usize, output_size: usize) -> DenseLayer {
-        Self::new(input_size, output_size, 1.0 / input_size as DataElement, 0.0)
+        Self::new(input_size, output_size, WeightMode::Normal, 0.0)
     }
 
-    pub fn new(input_size: usize, output_size: usize, initial_weight: DataElement, initial_bias: DataElement) -> DenseLayer {
+    pub fn new(input_size: usize, output_size: usize, initial_weight: WeightMode, initial_bias: fXX) -> DenseLayer {
+        let weights = match initial_weight {
+            WeightMode::Equal => {
+                Array2::from_elem((input_size, output_size), 1.0 / input_size as fXX)
+            }
+            WeightMode::Normal => {
+                // Variance adds so variance should sum to constant. Divide all variance by count and sqrt to get std dev
+                const VARIANCE_TARGET: fXX = 0.1;
+                Array::random((input_size, output_size), Normal::new(0., (VARIANCE_TARGET / input_size as fXX).sqrt()).unwrap())
+            }
+        };
+
         DenseLayer {
             config: DenseLayerConfig {
                 input_size,
                 output_size
             },
-            weights: Array2::from_elem((input_size, output_size), initial_weight),
+            weights,
             biases: Array1::from_elem((output_size,), initial_bias),
             back_context: None,
         }

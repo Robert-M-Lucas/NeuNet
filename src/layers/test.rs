@@ -2,10 +2,11 @@ use serde::{Deserialize, Serialize};
 use typetag::serde;
 
 use crate::layers::{DATA, Layer};
+use crate::model::fXX;
 
 #[derive(Serialize, Deserialize)]
 pub struct TestLayerConfig {
-    val: f64
+    val: fXX
 }
 
 
@@ -20,7 +21,7 @@ pub struct TestLayer {
 }
 
 impl TestLayer {
-    pub fn new(val: f64) -> TestLayer {
+    pub fn new(val: fXX) -> TestLayer {
         TestLayer {
             config: TestLayerConfig {
                 val,

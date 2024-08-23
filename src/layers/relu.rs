@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use typetag::serde;
 
 use crate::layers::{DATA, Layer};
-use crate::model::DataElement;
+use crate::model::fXX;
 
 #[derive(Serialize, Deserialize)]
 pub struct ReluActivationConfig {

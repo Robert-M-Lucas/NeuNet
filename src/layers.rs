@@ -4,6 +4,7 @@ pub mod test;
 pub mod relu;
 pub mod dense;
 pub mod softmax;
+pub mod dropout;
 
 #[typetag::serde]
 pub trait Layer {

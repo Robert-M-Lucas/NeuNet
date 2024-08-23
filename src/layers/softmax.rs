@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use typetag::serde;
 
 use crate::layers::{DATA, Layer};
-use crate::model::DataElement;
+use crate::model::fXX;
 
 #[derive(Serialize, Deserialize)]
 pub struct SoftmaxActivationConfig {
@@ -55,15 +55,10 @@ impl Layer for SoftmaxActivator {
     fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
         let max = val.max().unwrap();
 
-        let exp = val.mapv(|e| e - max);
+        let exp = val.mapv(|e| (e - max).exp());
         let exp_sum = exp.sum();
 
-        let output = if exp_sum == 0.0 {
-            Array::from_elem(val.shape(), 1.0 / val.shape().iter().fold(1, |a, b| a * b) as DataElement)
-        }
-        else {
-            exp.mapv(|e| e / exp_sum)
-        };
+        let output = exp.mapv(|e| e / exp_sum);
 
         if save_context {
             self.back_context = Some(val);
