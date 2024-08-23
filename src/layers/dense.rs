@@ -80,6 +80,5 @@ impl Layer for DenseLayer {
     fn load_data(&mut self, data: Vec<Vec<u8>>) {
         self.weights = bincode::deserialize(&data[0]).unwrap();
         self.biases = bincode::deserialize(&data[1]).unwrap();
-        println!("{:?}", self.weights.shape());
     }
 }

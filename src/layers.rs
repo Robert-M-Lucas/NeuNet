@@ -1,7 +1,9 @@
 use crate::model::DATA;
 
 pub mod test;
+pub mod relu;
 pub mod dense;
+pub mod softmax;
 
 #[typetag::serde]
 pub trait Layer {
