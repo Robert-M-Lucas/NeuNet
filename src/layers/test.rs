@@ -14,7 +14,9 @@ pub struct TestLayer {
     #[serde(flatten)]
     config: TestLayerConfig,
     #[serde(skip)]
-    weights: Option<DATA>
+    weights: Option<DATA>,
+    #[serde(skip)]
+    back_context: Option<()>
 }
 
 impl TestLayer {
@@ -23,7 +25,8 @@ impl TestLayer {
             config: TestLayerConfig {
                 val,
             },
-            weights: None
+            weights: None,
+            back_context: None
         }
     }
 
@@ -32,9 +35,21 @@ impl TestLayer {
     }
 }
 
-#[typetag::serde]
+#[typetag::serde(name = "Test Layer")]
 impl Layer for TestLayer {
-    fn forward_actual(&mut self, val: DATA) -> DATA {
+    fn name(&self) -> &'static str {
+        Self::name()
+    }
+
+    fn input_shape(&self) -> Vec<usize> {
+        todo!()
+    }
+
+    fn output_shape(&self) -> Vec<usize> {
+        todo!()
+    }
+    
+    fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
         let mut out = val.mapv(|x| x + self.config.val);
         if let Some(weights) = &self.weights {
             out += weights;
@@ -43,16 +58,11 @@ impl Layer for TestLayer {
         out
     }
 
-    fn name(&self) -> &'static str {
-        Self::name()
+    fn data_bin(&self) -> Vec<Vec<u8>> {
+        vec![bincode::serialize(self.weights.as_ref().unwrap()).unwrap()]
     }
 
-    fn weights_bin(&self) -> Vec<u8> {
-        bincode::serialize(self.weights.as_ref().unwrap()).unwrap()
+    fn load_data(&mut self, data: Vec<Vec<u8>>) {
+        self.weights = Some(bincode::deserialize(&data[0]).unwrap());
     }
-
-    fn load_weights(&mut self, weights_bin: Vec<u8>) {
-        self.weights = Some(bincode::deserialize(&weights_bin).unwrap());
-    }
-
 }
