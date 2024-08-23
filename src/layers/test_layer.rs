@@ -1,54 +1,62 @@
 use std::path::Path;
 use std::todo;
+use b_box::b;
+use ndarray::array;
+use ndarray_npy::write_npy;
 use serde::{Deserialize, Serialize};
+use typetag::serde;
 use crate::layers::{DATA, Layer};
 
 #[derive(Serialize, Deserialize)]
-struct TestLayerConfig {
-    val: i8
+pub struct TestLayerConfig {
+    val: f64
 }
 
-#[derive(Default)]
+
+#[derive(Serialize, Deserialize)]
 pub struct TestLayer {
-    config: TestLayerConfig
+    #[serde(flatten)]
+    config: TestLayerConfig,
+    #[serde(skip)]
+    weights: Option<DATA>
 }
 
 impl TestLayer {
+    pub fn new(val: f64) -> TestLayer {
+        TestLayer {
+            config: TestLayerConfig {
+                val,
+            },
+            weights: None
+        }
+    }
+
     pub const fn name() -> &'static str {
         "TestLayer"
     }
-
-    pub fn from_config(file: &Path) -> Box<dyn Layer> {
-        todo!()
-    }
 }
 
+#[typetag::serde]
 impl Layer for TestLayer {
     fn forward_actual(&mut self, val: DATA) -> DATA {
-        val.mapv(|x| x + 1.0)
+        let mut out = val.mapv(|x| x + self.config.val);
+        if let Some(weights) = &self.weights {
+            out += weights;
+        }
+        self.weights = Some(out.clone());
+        out
     }
 
     fn name(&self) -> &'static str {
         Self::name()
     }
 
-    fn save(&self, file: &Path) {
-        todo!()
+    fn weights_bin(&self) -> Vec<u8> {
+        bincode::serialize(self.weights.as_ref().unwrap()).unwrap()
     }
 
-    fn save_weights(&self, file: &Path) {
-        todo!()
+    fn load_weights(&mut self, weights_bin: Vec<u8>) {
+        self.weights = Some(bincode::deserialize(&weights_bin).unwrap());
     }
 
-    fn load_model(file: &Path) {
-        todo!()
-    }
-
-    fn load_weights(&self, file: &Path) {
-        todo!()
-    }
-
-    fn inner(&self) -> &dyn Serialize {
-        &self.config
-    }
 }
