@@ -1,7 +1,6 @@
-use b_box::b;
 use ndarray::array;
+
 use crate::layers::{Layer, Model};
-use crate::layers::test_layer::TestLayer;
 
 mod layers;
 

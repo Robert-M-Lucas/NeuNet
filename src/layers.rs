@@ -1,12 +1,11 @@
-use std::fmt::format;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+
 use itertools::Itertools;
 use ndarray::{Array, IxDyn};
 use serde::{Deserialize, Serialize};
-use test_layer::TestLayer;
 
 pub mod test_layer;
 
