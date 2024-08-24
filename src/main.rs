@@ -46,6 +46,8 @@ fn fdata() -> LabeledData {
     array_read.append(Axis(0), reader.deserialize_array2((500, 55)).unwrap().into_dyn().view()).unwrap();
 
     let data = array_read.slice(s![.., ..54]).mapv(|e| e as fXX).into_dyn();
+
+    // One-hot encode labels
     let hot: (ArrayBase<OwnedRepr<fXX>, _>, ArrayBase<OwnedRepr<fXX>, _>) = (array![1.0, 0.0], array![1.0, 0.0]);
     let labels = stack(Axis(0), &array_read.slice(s![.., 54]).iter().map(|e| if *e == 0 { hot.0.view() } else { hot.1.view() }).collect_vec()).unwrap().into_dyn();
 
@@ -71,6 +73,7 @@ fn feval(output: DATA, actual: DATA) -> fXX {
 }
 
 fn main() {
+    // ? Test model performance with k-fold
     let data = fdata();
 
     Model::evaluate_kfold(
@@ -85,7 +88,7 @@ fn main() {
         &feval
     );
 
-
+    // ? Train final model on all data
     let mut model = fmodel();
     println!("Model:\n{}", model.config());
 
@@ -96,6 +99,12 @@ fn main() {
         final_training_rate: 0.0001,
     }, None);
 
-
+    // Save trained model
     model.save_with_weights("models/model1", true);
+    // Save untrained model
+    // model.save("models/model1", true);
+
+
+    // Make prediction
+    // let prediction = model.forward(input_data, false);
 }
