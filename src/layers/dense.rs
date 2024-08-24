@@ -1,5 +1,4 @@
 use ndarray::{array, Array, Array1, Array2, Axis, s};
-use ndarray::linalg::kron;
 use ndarray_rand::rand_distr::{Normal, Uniform};
 use serde::{Deserialize, Serialize};
 use typetag::serde;
@@ -79,7 +78,7 @@ impl Layer for DenseLayer {
     }
 
     fn forward_actual(&mut self, val: DATA, training: bool) -> DATA {
-        let val = val.to_shape((self.config.input_size,)).unwrap();
+        let val = val.into_shape((self.config.input_size,)).unwrap();
         let output = val.dot(&self.weights) + &self.biases;
 
         if training {

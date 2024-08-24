@@ -129,10 +129,10 @@ impl Model {
             let testing_data = testing_data.unwrap();
             let training_data = training_data.unwrap();
 
-            model.train(training_data, per_fold_config.clone(), Some(format!("[Fold {k}/{folds}]")));
+            model.train(training_data, per_fold_config.clone(), Some(format!("[Fold {}/{folds}]", k + 1)));
             let accuracy = model.test(testing_data, eval_fn);
             total_accuracy += accuracy;
-            println!("Fold {k}/{folds} finished with an accuracy of {accuracy:.8}");
+            println!("Fold {}/{folds} finished with an accuracy of {accuracy:.8}", k + 1);
         }
 
         println!("Model accuracy ({folds}-fold cross validation): {}", total_accuracy / folds as fXX);

@@ -1,4 +1,4 @@
-use ndarray::{array, Array};
+use ndarray::{array, Array, Array1};
 use ndarray_stats::QuantileExt;
 use serde::{Deserialize, Serialize};
 use typetag::serde;
@@ -64,7 +64,30 @@ impl Layer for SoftmaxActivator {
     }
 
     fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA {
-        todo!()
+        let back_context = self.back_context.take().unwrap();
+
+        let mut new_gradient = Array1::zeros(self.config.size);
+        let e = (
+            &back_context - *back_context.max().unwrap()
+        ).mapv(|e| e.exp());
+
+        let e_sum = e.sum();
+
+        for i in 0..self.config.size {
+            for j in 0..self.config.size {
+                let deriv;
+                let c = e_sum - e[i];
+                if i == j {
+                    deriv = (e[i] * c) / (e[i] + c).powi(2);
+                }
+                else {
+                    deriv = -(e[j] * e[i]) / (e[i] + c).powi(2);
+                }
+                new_gradient[i] += deriv * gradient[i];
+            }
+        }
+
+        new_gradient.into_dyn()
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {
