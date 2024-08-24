@@ -43,7 +43,7 @@ impl DropoutLayer {
     }
 }
 
-#[typetag::serde(name = "Dropout Activation")]
+#[typetag::serde(name = "Dropout Layer")]
 impl Layer for DropoutLayer {
     fn name(&self) -> &'static str {
         Self::name()
@@ -57,8 +57,8 @@ impl Layer for DropoutLayer {
         vec![self.config.size]
     }
 
-    fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
-        if save_context {
+    fn forward_actual(&mut self, val: DATA, training: bool) -> DATA {
+        if training {
             let val = val.into_shape(self.config.size).unwrap();
             let mut dropout = Array1::ones((self.config.size - self.config.remove,));
             dropout.append(Axis(0), Array1::zeros(self.config.remove).view()).unwrap();
@@ -73,6 +73,10 @@ impl Layer for DropoutLayer {
         else {
             val
         }
+    }
+
+    fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA {
+        todo!()
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {

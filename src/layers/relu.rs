@@ -51,14 +51,23 @@ impl Layer for ReluActivator {
         self.config.size.clone()
     }
 
-    fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
+    fn forward_actual(&mut self, val: DATA, training: bool) -> DATA {
         let output = val.mapv(|e| e.max(0.0));
 
-        if save_context {
+        if training {
             self.back_context = Some(val);
         }
 
         output
+    }
+
+    fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA {
+        // TODO: What to do with 0? (no gradient)
+        gradient * self.back_context.take().unwrap().mapv(|e| if e > 0.0 {
+            1.0
+        } else {
+            0.0
+        })
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {

@@ -1,4 +1,5 @@
-use ndarray::{array, Array, Array1, Array2};
+use ndarray::{array, Array, Array1, Array2, Axis, s};
+use ndarray::linalg::kron;
 use ndarray_rand::rand_distr::{Normal, Uniform};
 use serde::{Deserialize, Serialize};
 use typetag::serde;
@@ -77,15 +78,31 @@ impl Layer for DenseLayer {
         vec![self.config.output_size]
     }
 
-    fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
+    fn forward_actual(&mut self, val: DATA, training: bool) -> DATA {
         let val = val.to_shape((self.config.input_size,)).unwrap();
         let output = val.dot(&self.weights) + &self.biases;
 
-        if save_context {
+        if training {
             self.back_context = Some(val.into_owned());
         }
 
         output.into_dyn()
+    }
+
+    fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA {
+        // TODO: Max gradient?
+
+        let gradient = gradient.into_shape(self.config.output_size).unwrap();
+        self.biases = (&self.biases - &gradient) * training_rate;
+
+        let back_context = self.back_context.take().unwrap();
+        for (mut wa, bc) in self.weights.axis_iter_mut(Axis(0)).zip(back_context.iter()) {
+            wa -= &((&gradient * *bc) * training_rate).view();
+        }
+
+        // self.weights.slice -= kron(self.back_context.unwrap(), &gradient) * training_rate;
+
+        Array::from_iter(self.weights.axis_iter(Axis(0)).map(|r| r.dot(&gradient))).into_dyn()
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {

@@ -8,7 +8,7 @@ use crate::model::fXX;
 
 #[derive(Serialize, Deserialize)]
 pub struct SoftmaxActivationConfig {
-    size: Vec<usize>
+    size: usize
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,10 +21,6 @@ pub struct SoftmaxActivator {
 
 impl SoftmaxActivator {
     pub fn new(size: usize) -> SoftmaxActivator {
-        Self::new_multi_dim(vec![size])
-    }
-
-    pub fn new_multi_dim(size: Vec<usize>) -> SoftmaxActivator {
         SoftmaxActivator {
             config: SoftmaxActivationConfig {
                 size
@@ -45,14 +41,14 @@ impl Layer for SoftmaxActivator {
     }
 
     fn input_shape(&self) -> Vec<usize> {
-        self.config.size.clone()
+        vec![self.config.size]
     }
 
     fn output_shape(&self) -> Vec<usize> {
-        self.config.size.clone()
+        vec![self.config.size]
     }
 
-    fn forward_actual(&mut self, val: DATA, save_context: bool) -> DATA {
+    fn forward_actual(&mut self, val: DATA, training: bool) -> DATA {
         let max = val.max().unwrap();
 
         let exp = val.mapv(|e| (e - max).exp());
@@ -60,11 +56,15 @@ impl Layer for SoftmaxActivator {
 
         let output = exp.mapv(|e| e / exp_sum);
 
-        if save_context {
+        if training {
             self.back_context = Some(val);
         }
 
         output
+    }
+
+    fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA {
+        todo!()
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {
