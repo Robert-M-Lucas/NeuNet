@@ -169,7 +169,7 @@ impl Model {
             let loss_avg = loss_total / data.labels.len_of(Axis(0)) as fXX;
             print!("\r");
             if let Some(prefix) = prefix.as_ref() { print!("{prefix} ") }
-            print!("Epoch: {} | Loss: {loss_avg:.8} | Training Rate: {training_rate:.8} | Avg time per epoch: {:?}", e + 1, t / (e + 1) as u32);
+            print!("Epoch: {} | Loss: {loss_avg:.8} | Training Rate: {training_rate:.8} | Avg time per epoch: {:?}      ", e + 1, t / (e + 1) as u32);
             stdout().flush().unwrap();
         }
         println!();

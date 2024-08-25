@@ -22,6 +22,9 @@ fn fmodel_create() -> Model {
     let mut model = Model::new(vec![
         b!(DenseLayer::new_default(54, 54)),
         b!(ReluActivator::new(54)),
+        b!(DropoutLayer::new(54, 0.25)),
+        b!(DenseLayer::new_default(54, 54)),
+        b!(ReluActivator::new(54)),
         b!(DropoutLayer::new(54, 0.2)),
         b!(DenseLayer::new_default(54, 27)),
         b!(ReluActivator::new(27)),
@@ -116,7 +119,7 @@ fn main() {
     let mut model = train();
 
     // Save trained model
-    model.save_with_weights("models/model1", true);
+    model.save_with_weights("models/main", true);
     // Save untrained model
     // model.save("models/model1", true);
 
