@@ -18,7 +18,7 @@ mod loss;
 
 
 // Generate model
-fn fmodel() -> Model {
+fn fmodel_create() -> Model {
     let mut model = Model::new(vec![
         b!(DenseLayer::new_default(54, 54)),
         b!(ReluActivator::new(54)),
@@ -31,8 +31,15 @@ fn fmodel() -> Model {
     ],
    b!(MeanSquared::new())
     );
-    // let mut model = Model::load_with_weights("models/model1");
     model
+}
+
+fn fmodel_load() -> Model {
+    Model::load("models/model1")
+}
+
+fn fmodel_load_with_weights() -> Model {
+    Model::load_with_weights("models/model1")
 }
 
 // Get data
@@ -48,7 +55,7 @@ fn fdata() -> LabeledData {
     let data = array_read.slice(s![.., ..54]).mapv(|e| e as fXX).into_dyn();
 
     // One-hot encode labels
-    let hot: (ArrayBase<OwnedRepr<fXX>, _>, ArrayBase<OwnedRepr<fXX>, _>) = (array![1.0, 0.0], array![1.0, 0.0]);
+    let hot: (ArrayBase<OwnedRepr<fXX>, _>, ArrayBase<OwnedRepr<fXX>, _>) = (array![1.0, 0.0], array![0.0, 1.0]);
     let labels = stack(Axis(0), &array_read.slice(s![.., 54]).iter().map(|e| if *e == 0 { hot.0.view() } else { hot.1.view() }).collect_vec()).unwrap().into_dyn();
 
     LabeledData {
@@ -72,32 +79,41 @@ fn feval(output: DATA, actual: DATA) -> fXX {
     }
 }
 
-fn main() {
+fn eval_model() {
     // ? Test model performance with k-fold
     let data = fdata();
 
     Model::evaluate_kfold(
-        &fmodel,
+        &fmodel_create,
         data,
         TrainingRateConfig {
-            epochs: 500,
+            epochs: 5000,
             initial_training_rate: 0.1,
             final_training_rate: 0.0001,
         },
         6,
         &feval
     );
+}
 
+fn train() -> Model {
     // ? Train final model on all data
-    let mut model = fmodel();
-    println!("Model:\n{}", model.config());
+    let mut model = fmodel_create();
 
     let data = fdata();
     model.train(data, TrainingRateConfig {
-        epochs: 500,
+        epochs: 5000,
         initial_training_rate: 0.1,
         final_training_rate: 0.0001,
     }, None);
+    model
+}
+
+fn main() {
+    eval_model();
+
+    println!("\nTraining final model");
+    let mut model = train();
 
     // Save trained model
     model.save_with_weights("models/model1", true);
@@ -106,5 +122,10 @@ fn main() {
 
 
     // Make prediction
-    // let prediction = model.forward(input_data, false);
+    // let input = fdata().data.axis_iter(Axis(0)).nth(100).unwrap().into_owned();
+    // let actual = fdata().labels.axis_iter(Axis(0)).nth(100).unwrap().into_owned();
+    // let prediction = model.forward(input, false);
+
+    // Terrible test on existing data
+    println!("Accuracy: {}", model.test(fdata(), &feval));
 }

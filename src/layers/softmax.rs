@@ -75,19 +75,18 @@ impl Layer for SoftmaxActivator {
 
         for i in 0..self.config.size {
             for j in 0..self.config.size {
-                let deriv;
                 let c = e_sum - e[i];
-                if i == j {
-                    deriv = (e[i] * c) / (e[i] + c).powi(2);
-                }
-                else {
-                    deriv = -(e[j] * e[i]) / (e[i] + c).powi(2);
-                }
-                new_gradient[i] += deriv * gradient[i];
+                let deriv = if i == j {
+                    (e[i] * c) / (e[i] + c).powi(2)
+                } else {
+                    -(e[j] * e[i]) / (e[i] + c).powi(2)
+                };
+                new_gradient[i] += deriv * gradient[j];
             }
         }
 
-        new_gradient.into_dyn()
+        let ng = new_gradient.into_dyn();
+        ng
     }
 
     fn data_bin(&self) -> Vec<Vec<u8>> {

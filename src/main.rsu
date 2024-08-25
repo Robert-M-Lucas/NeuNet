@@ -1,0 +1,55 @@
+use std::fs::File;
+use b_box::b;
+use csv::ReaderBuilder;
+use itertools::Itertools;
+use ndarray::{array, Array1, Array2, ArrayBase, Axis, OwnedRepr, s, stack, stack_new_axis};
+use ndarray_csv::Array2Reader;
+
+use crate::layers::dense::{DenseLayer, WeightMode};
+use crate::layers::dropout::DropoutLayer;
+use crate::layers::Layer;
+use crate::layers::relu::ReluActivator;
+use crate::layers::softmax::SoftmaxActivator;
+use crate::loss::Loss;
+use crate::loss::mean_squared::MeanSquared;
+use crate::model::{DATA, fXX, LabeledData, Model, TrainingRateConfig};
+
+mod model;
+mod layers;
+mod loss;
+
+
+fn main() {
+    let mut dl = DenseLayer::new(2, 2, WeightMode::Custom(
+        array![[1., 2.], [3., 4.]]
+    ), 1.5);
+
+    let r =  dl.forward_actual(
+        array![[6., 5.]].into_dyn(),
+        true
+    );
+    println!("{r}");
+
+    let mut sa = SoftmaxActivator::new(2);
+
+    let r2 = sa.forward_actual(
+        r,
+        true
+    );
+    println!("{r2}");
+
+    let mut ms = MeanSquared::new();
+
+    let l = ms.loss(r2, array![1., 0.].into_dyn());
+    println!("{:?}", l);
+
+    println!();
+
+    let g2 = sa.backward_actual(l.gradient, 0.1);
+    println!("SMG: {g2}");
+
+    dl.backward_actual(g2, 0.1);
+
+    println!("{}", dl.weights);
+    println!("{}", dl.biases);
+}

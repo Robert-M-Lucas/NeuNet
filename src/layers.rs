@@ -40,8 +40,6 @@ pub trait Layer {
 
     fn backward_actual(&mut self, gradient: DATA, training_rate: fXX) -> DATA;
 
-
-
     fn data_bin(&self) -> Vec<Vec<u8>>;
 
     fn load_data(&mut self, data: Vec<Vec<u8>>);

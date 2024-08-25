@@ -9,7 +9,8 @@ use crate::model::fXX;
 
 pub enum WeightMode {
     Equal,
-    Normal
+    Normal,
+    Custom(Array2<fXX>)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -42,9 +43,10 @@ impl DenseLayer {
             }
             WeightMode::Normal => {
                 // Variance adds so variance should sum to constant. Divide all variance by count and sqrt to get std dev
-                const VARIANCE_TARGET: fXX = 0.1;
+                const VARIANCE_TARGET: fXX = 0.5;
                 Array::random((input_size, output_size), Normal::new(0., (VARIANCE_TARGET / input_size as fXX).sqrt()).unwrap())
             }
+            WeightMode::Custom(w) => w,
         };
 
         DenseLayer {
@@ -92,7 +94,7 @@ impl Layer for DenseLayer {
         // TODO: Max gradient?
 
         let gradient = gradient.into_shape(self.config.output_size).unwrap();
-        self.biases = (&self.biases - &gradient) * training_rate;
+        self.biases = &self.biases - (&gradient * training_rate);
 
         let back_context = self.back_context.take().unwrap();
         for (mut wa, bc) in self.weights.axis_iter_mut(Axis(0)).zip(back_context.iter()) {

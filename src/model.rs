@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{stdout, Write};
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -98,11 +98,14 @@ impl Model {
                 )
                 .collect_vec();
 
-        if data_folds.last().unwrap().labels.len_of(Axis(0)) < fold_size {
+        // Merge last two folds if not perfectly divisible
+        if data_folds.len() > folds {
             let LabeledData { data, labels } = data_folds.pop().unwrap();
             data_folds.last_mut().unwrap().labels.append(Axis(0), labels.view()).unwrap();
             data_folds.last_mut().unwrap().data.append(Axis(0), data.view()).unwrap();
         }
+
+        println!("Starting k-fold cross-validation with folds: {:?}", data_folds.iter().map(|x| x.labels.len_of(Axis(0))).collect_vec());
 
         let mut total_accuracy = 0.0;
         for k in 0..folds {
@@ -148,10 +151,10 @@ impl Model {
         let c = config.initial_training_rate - a;
         let fx = |x: fXX| a * (1. / (x + 1.)) + c;
 
+        let start = Instant::now();
         for e in 0..config.epochs {
             let training_rate = fx(e as fXX);
             let mut loss_total = 0.0;
-            let start = Instant::now();
             for (label, row) in data.labels.axis_iter(Axis(0)).zip(data.data.axis_iter(Axis(0))) {
                 let prediction = self.forward(row.into_owned(), true);
                 let clipped_prediction = prediction.mapv(|e| e.clamp(1e-7, 1.0 - 1e-7));
@@ -164,9 +167,12 @@ impl Model {
             }
             let t = Instant::now() - start;
             let loss_avg = loss_total / data.labels.len_of(Axis(0)) as fXX;
+            print!("\r");
             if let Some(prefix) = prefix.as_ref() { print!("{prefix} ") }
-            println!("Epoch: {e} | Loss: {loss_avg:.8} | Time per epoch: {:?}", t);
+            print!("Epoch: {} | Loss: {loss_avg:.8} | Training Rate: {training_rate:.8} | Avg time per epoch: {:?}", e + 1, t / (e + 1) as u32);
+            stdout().flush().unwrap();
         }
+        println!();
     }
 
     pub fn test(
